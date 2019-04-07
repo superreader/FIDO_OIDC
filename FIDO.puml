@@ -1,0 +1,30 @@
+@startuml
+actor user as "ユーザー"
+participant authenticator as "認証器"
+participant browser as "ブラウザー"
+participant rp_fido as "Relying Party(RP)"
+participant fido_server as "FIDOサーバー"
+
+'処理開始
+group ユーザー認証
+user -> browser : 認証要求
+browser -> rp_fido : 認証要求
+rp_fido -> fido_server : challengeの発行要求
+fido_server -> fido_server: challengeの発行
+fido_server -> rp_fido :challegeを含んだoptions
+rp_fido -> browser : credentials.get()
+browser -> authenticator: 本人確認要求
+user <-> authenticator : PINや指紋認証などの\n本人確認
+authenticator -> authenticator : 秘密鍵を使い\n署名データを作成
+authenticator -> browser : assertion
+browser -> rp_fido : assertion
+rp_fido -> fido_server : assertion
+fido_server -> fido_server : 公開鍵を使い署名検証
+fido_server -> rp_fido : 署名検証結果を通知
+rp_fido -> browser : 認証状態にする
+end
+browser -> user : 認証状態を通知\n(もしくはログイン後のサービスにリダイレクト)
+
+
+
+@enduml

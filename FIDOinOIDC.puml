@@ -1,0 +1,45 @@
+@startuml
+actor user as "ユーザー"
+participant authenticator as "認証器"
+participant browser as "ブラウザー"
+participant rp as "OIDCからみたRelying Party\n(属性情報を取得したいサービス)"
+participant rp_fido as "FIDOからみたRelying Party\n(OPのアプリケーション)"
+participant fido_server as "OpenID Provider(OP)\n 認証(FIDOサーバー)"
+participant op as "OpenID Provider(OP)\n認可・UserInfo"
+
+'処理開始
+user -> browser: アクセス
+browser -> rp: アクセス
+rp --> browser:リダイレクト
+browser -> op :Authorization Request
+
+group ユーザー認証
+op -> browser : 認証要求
+browser -> rp_fido : 認証要求
+rp_fido -> fido_server : challengeの発行要求
+fido_server -> fido_server: challengeの発行
+fido_server -> rp_fido :challegeを含んだoptions
+rp_fido -> browser : credentials.get()
+browser -> authenticator: 本人確認要求
+user <-> authenticator : PINや指紋認証などの\n本人確認
+authenticator -> authenticator : 秘密鍵を使い\n署名データを作成
+authenticator -> browser : assertion
+browser -> rp_fido : assertion
+rp_fido -> fido_server : assertion
+fido_server -> fido_server : 公開鍵を使い署名検証
+fido_server -> rp_fido : 署名検証結果を通知
+rp_fido -> browser : ログイン状態にする
+end
+browser -> op : 認可コード発行のためにアクセス
+op -> op : Authorization Code(認可コード)発行
+op --> browser: リダイレクト
+browser -> rp: Authorization Codeを積んで\nRedirect URIにアクセス
+rp -> op: Authorization Codeを使いToken Request
+op -> rp : Access Token\nRefresh Token\nID Tokenを発行
+op <-> rp : ID Tokenの検証
+rp -> op : Access Tokenを使用して属性情報を取得する
+op -> rp : 属性情報
+rp -> browser : 属性情報を使ったサービスを表示
+browser -> user : サービス提供
+
+@enduml

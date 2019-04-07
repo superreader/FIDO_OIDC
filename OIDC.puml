@@ -1,0 +1,26 @@
+@startuml
+actor user as "ユーザー"
+participant browser as "ブラウザー"
+participant rp as "Relying Party(RP)"
+participant op as "OpenID Provider(OP)\n認証・認可・UserInfo"
+
+'処理開始
+user -> browser : アクセス
+browser -> rp: アクセス
+rp --> browser:リダイレクト
+browser -> op :Authorization Request
+group ユーザー認証
+op <-> user : パスワードなどで認証
+end
+browser -> op : 認可コード発行のためにアクセス
+op -> op : Authorization Code(認可コード)発行
+op --> browser: リダイレクト
+browser -> rp: Authorization Codeを積んで\nRedirect URIにアクセス
+rp -> op: Authorization Codeを使いToken Request
+op -> rp : Access Token\nRefresh Token\nID Tokenを発行
+op <-> rp : ID Tokenの検証
+rp -> op : Access Tokenを使用して属性情報を取得する
+op -> rp : 属性情報
+rp -> browser : 属性情報を使ったサービスを表示
+browser -> user : サービス提供
+@enduml
